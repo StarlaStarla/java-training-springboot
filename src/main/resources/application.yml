@@ -1,0 +1,40 @@
+spring:
+  application:
+  name: springboot
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/crossskill?characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: root
+
+  flyway:
+    # ????flyway
+    enabled: true
+    # ???????UTF-8
+    encoding: UTF-8
+    # 历史表
+    baseline-on-migrate: true
+    # 默认1，从0开始可以规避版本1不执行问题
+    baseline-version: 0
+    locations: classpath:db/migration
+    url: ${spring.datasource.url}
+    user: ${spring.datasource.username}
+    password: ${spring.datasource.password}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  logging:
+    level:
+      org:
+        springframework:
+          boot:
+            autoconfigure:
+              flyway: DEBUG
+        flywaydb:
+          core: DEBUG
