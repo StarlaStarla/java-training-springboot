@@ -1,0 +1,70 @@
+services:
+  mysql:
+    image: mysql:8.0.26
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: crossskill
+      MYSQL_USER: test
+      MYSQL_PASSWORD: test
+    ports:
+      - 3306:3306
+    volumes:
+#      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql-data:/var/lib/mysql  # 持久化 MySQL 数据
+    networks:
+      - my-network
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - 6379:6379
+    environment:
+      REDIS_USERNAME: starla
+      REDIS_PASSWORD: starla
+    command: sh -c "echo \"user $${REDIS_USERNAME} on >$${REDIS_PASSWORD} allcommands allkeys\" > users.acl && redis-server --requirepass $${REDIS_PASSWORD} --aclfile users.acl"
+    volumes:
+      - redis-data:/data/redis
+    networks:
+      - my-network
+
+  mongodb:
+    image: mongo
+    container_name: mongodb
+    ports:
+      - "27017:27017"  # 映射端口以便本地访问
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+    volumes:
+#      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro  #初始化数据库数据
+      - mongo-data:/data/db  # 持久化 MongoDB 数据
+    networks:
+      - my-network
+
+  springboot-app:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+      - mongodb
+      - redis
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 5  # 限制最大重启次数
+        delay: 5s       # 每次重启的延迟时间
+        window: 30s      # 在这个时间窗口内计数
+    networks:
+      - my-network
+
+volumes:
+  mysql-data:
+  mongo-data:
+  redis-data:
+
+networks:
+  my-network:
+    driver: bridge

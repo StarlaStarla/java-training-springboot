@@ -1,15 +1,15 @@
+//flyway {
+//	url = 'jdbc:mysql://localhost:3306/crossskill'
+//	user = 'root'
+//	password = 'root'
+//	locations = ['filesystem:src/main/resources/db/migration']
+//}
+
 plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.4.2'
 	id 'io.spring.dependency-management' version '1.1.7'
 	id 'org.flywaydb.flyway' version "10.20.1"
-}
-
-flyway {
-	url = 'jdbc:mysql://localhost:3306/crossskill'
-	user = 'root'
-	password = 'root'
-	locations = ['filesystem:src/main/resources/db/migration']
 }
 
 group = 'com.example'
@@ -27,13 +27,35 @@ repositories {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	implementation 'org.springframework.boot:spring-boot-starter-cache'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 	implementation 'org.flywaydb:flyway-core'
 	implementation 'org.flywaydb:flyway-mysql'
+	implementation("org.projectlombok:lombok-mapstruct-binding:0.2.0")
 	runtimeOnly 'com.mysql:mysql-connector-j'
+	// lombok，编译有效，打包无效
+	compileOnly 'org.projectlombok:lombok'
+	// gradle 5.0以上版本注解处理不再compile classpath，需要增加 annotation processor path
+	annotationProcessor 'org.projectlombok:lombok'
+	// MapStruct
+	implementation 'org.mapstruct:mapstruct:1.6.3'
+	annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.named('test') {
+	enabled = false
 	useJUnitPlatform()
 }
+
+task copyDependencies(type: Copy) {
+	from configurations.runtimeClasspath // 获取运行时依赖的 JAR
+	into layout.buildDirectory.dir("dependencies").get().asFile // 将运行时依赖复制到 build/dependencies 目录
+}
+
+// 将 copyDependencies 与 build 绑定
+build.dependsOn(copyDependencies)

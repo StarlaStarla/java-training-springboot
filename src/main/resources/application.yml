@@ -1,33 +1,60 @@
 spring:
+  session:
+    store-type: redis # Session 存储类型为 Redis
+  http:
+    encoding:
+      charset: UTF-8
+      enabled: true
   application:
   name: springboot
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/crossskill?characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+#    为什么不能使用localhost连接mysql？？？Flyway 在 Docker 容器中运行时，localhost 指向的是容器自身，而不是宿主机（需要用 Docker 网络中的 mysql 作为主机名）。
+    url: jdbc:mysql://localhost:3306/crossskill?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
     username: root
     password: root
 
   flyway:
-    # ????flyway
     enabled: true
-    # ???????UTF-8
     encoding: UTF-8
     # 历史表
     baseline-on-migrate: true
     # 默认1，从0开始可以规避版本1不执行问题
     baseline-version: 0
     locations: classpath:db/migration
-    url: ${spring.datasource.url}
-    user: ${spring.datasource.username}
-    password: ${spring.datasource.password}
+#    url: jdbc:mysql://mysql:3306/crossskill?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+#    user: root
+#    password: root
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none  # JPA/ Hibernate 是否会更新表结构（例如新增字段或修改字段类型）,比如自动添加order表关联user的字段：user_id。不删除表和字段。如果表不存在，会创建新表。
+                        # ddl-auto: none 不会生成或修改数据库表结构，完全依赖现有的表结构。
+                        # ddl-auto: validate 只验证实体类与数据库表结构的一致性。如果不一致，会抛出异常，但不会修改数据库。
+                        # ddl-auto: create 每次启动应用时，删除所有已有表，然后根据实体类重新创建表结构。
+                        # ddl-auto: create-drop	在应用关闭时会删除数据库表（适用开发或测试）。
     show-sql: true
     properties:
       hibernate:
         format_sql: true
+        time_zone: UTC
+
+  cache:
+    type: redis    # 指定缓存类型为 Redis
+
+  redis:
+    host: redis
+    port: 6379
+    time-to-live: 3600000 # 设置缓存过期时间（毫秒）
+#    password: starla # 如果没有密码可不配置
+    database: 0                   # 使用 Redis 的第 0 个数据库
+    timeout: 5000ms               # 连接超时时间
+    ssl: false
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
 
   logging:
     level:
